@@ -1,0 +1,33 @@
+display_information:
+  name: 1TimeLink
+  description: Secure, one-time secret sharing for Slack teams
+  background_color: "#302b1b"
+  long_description: "1TimeLink is a security-first Slack app that lets teams share everything they need to work together securely.\r\n\r\nIn fast-moving engineering and IT teams, sharing temporary credentials or configuration values over chat is a daily reality. However, messages in Slack persist in channel history and logs, creating unnecessary exposure. 1TimeLink solves this by replacing plain-text secrets with one-time-use links that automatically expire.\r\n\r\nHow it works:\r\n\r\nUse the /1tl slash command to generate an encrypted, time-limited link. The link can be opened only once. After it's viewed, or after the expiry window passes, the content is permanently deleted from our servers. Nothing persists."
+features:
+  app_home:
+    home_tab_enabled: true
+    messages_tab_enabled: false
+    messages_tab_read_only_enabled: true
+  bot_user:
+    display_name: 1TimeLink
+    always_online: true
+  slash_commands:
+    - command: /1tl
+      url: https://<YOUR_DOMAIN>/webhooks/slack
+      description: Creates a new single use link
+      should_escape: false
+oauth_config:
+  redirect_urls:
+    - https://<YOUR_DOMAIN>/slack/oauth/callback
+  scopes:
+    bot:
+      - chat:write
+      - commands
+      - team:read
+      - users:read
+  pkce_enabled: false
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: true
+  is_mcp_enabled: false

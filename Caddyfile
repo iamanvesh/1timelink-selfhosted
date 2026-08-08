@@ -1,0 +1,85 @@
+{$DOMAIN} {
+    # Enable Gzip compression
+    encode gzip
+
+    # Map Cloudflare IP header with fallback to remote IP for client rate limits
+    map {http.request.header.Cf-Connecting-Ip} {client_ip_key} {
+        "" {http.request.remote_ip}
+        default {http.request.header.Cf-Connecting-Ip}
+    }
+
+    # Matchers
+    @oauth path /slack/oauth/callback*
+    @webhook path /webhooks/slack*
+    @link_create {
+        path /api/v1/links
+        method POST
+    }
+    @link_read {
+        path /api/v1/links/*
+        method GET PATCH
+    }
+    @api path /api/*
+    @slack_proxy path /api/v1/messages*
+
+    # Rate Limits (Matches production Caddy rules)
+    rate_limit @oauth {
+        zone oauth {
+            key {client_ip_key}
+            window 1m
+            events 30
+        }
+    }
+
+    rate_limit @webhook {
+        zone webhook {
+            key {client_ip_key}
+            window 1m
+            events 600
+        }
+    }
+
+    rate_limit @link_create {
+        zone link_create {
+            key {client_ip_key}
+            window 1m
+            events 30
+        }
+    }
+
+    rate_limit @link_read {
+        zone link_read {
+            key {client_ip_key}
+            window 1m
+            events 90
+        }
+    }
+
+    rate_limit @api {
+        zone global_api_flood {
+            key static_global_api
+            window 1m
+            events 5000
+        }
+    }
+
+    rate_limit @api {
+        zone api_per_ip {
+            key {client_ip_key}
+            window 1m
+            events 100
+        }
+    }
+
+    # Routing Configuration
+    # 1. Forward Slack message relay proxy calls (bypassing the backend JVM completely)
+    reverse_proxy @slack_proxy slack-proxy:3000
+
+    # 2. Forward standard OAuth, webhooks, and backend API routes
+    reverse_proxy @oauth backend:8080
+    reverse_proxy @webhook backend:8080
+    reverse_proxy @api backend:8080
+
+    # 3. Serve React SPA static files from frontend container
+    reverse_proxy * frontend:80
+}

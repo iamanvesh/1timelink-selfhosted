@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  ingress:
+    image: 1timelink-ingress:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    env_file:
+      - .env
+    depends_on:
+      - frontend
+      - backend
+      - slack-proxy
+    networks:
+      - public-net
+
+  frontend:
+    image: ghcr.io/iamanvesh/1timelink-frontend:latest
+    networks:
+      - public-net
+
+  backend:
+    image: ghcr.io/iamanvesh/1timelink-backend:latest
+    env_file:
+      - .env
+    networks:
+      - public-net
+
+  slack-proxy:
+    image: ghcr.io/iamanvesh/1timelink-slack-proxy:latest
+    env_file:
+      - .env
+    networks:
+      - public-net
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  public-net:
+    driver: bridge
