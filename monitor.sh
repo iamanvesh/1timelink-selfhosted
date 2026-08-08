@@ -63,7 +63,7 @@ fi
 
 # Aggregate and alert on failures
 if [ "$BACKEND_STATUS" != "UP" ] || [ "$FRONTEND_STATUS" != "UP" ] || [ "$PROXY_STATUS" != "UP" ]; then
-  MESSAGE="⚠️ *WARNING: 1TimeLink Service Health Alert*\\n\\n*Status Details:*\\n- *Frontend Nginx:* \`$FRONTEND_STATUS\`\\n- *Backend API:* \`$BACKEND_STATUS\`\\n- *Slack Proxy:* \`$PROXY_STATUS\`\\n\\n*Current Swarm Services:*\\n\`\`\`\\n${SWARM_STATUS}\`\`\`"
+  MESSAGE="WARNING: 1TimeLink Service Health Alert\\n\\n*Status Details:*\\n- *Frontend Nginx:* \`$FRONTEND_STATUS\`\\n- *Backend API:* \`$BACKEND_STATUS\`\\n- *Slack Proxy:* \`$PROXY_STATUS\`\\n\\n*Current Swarm Services:*\\n\`\`\`\\n${SWARM_STATUS}\`\`\`"
   curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"$MESSAGE\"}" "$SLACK_MONITOR_WEBHOOK"
   echo "Alert sent: Frontend: $FRONTEND_STATUS, Backend: $BACKEND_STATUS, Proxy: $PROXY_STATUS"
   exit 1
