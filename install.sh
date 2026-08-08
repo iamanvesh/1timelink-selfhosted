@@ -48,6 +48,8 @@ S3_ACCESS_KEY_ID=$(get_env_var "S3_ACCESS_KEY_ID")
 S3_SECRET_ACCESS_KEY=$(get_env_var "S3_SECRET_ACCESS_KEY")
 S3_ENDPOINT=$(get_env_var "S3_ENDPOINT")
 S3_BUCKET_NAME=$(get_env_var "S3_BUCKET_NAME")
+GITHUB_USERNAME=$(get_env_var "GITHUB_USERNAME")
+GITHUB_PAT=$(get_env_var "GITHUB_PAT")
 
 # Database setup helper variables
 POSTGRES_DB=$(get_env_var "POSTGRES_DB")
@@ -68,6 +70,8 @@ REQUIRED_VARS=(
   "S3_SECRET_ACCESS_KEY"
   "S3_ENDPOINT"
   "S3_BUCKET_NAME"
+  "GITHUB_USERNAME"
+  "GITHUB_PAT"
 )
 
 MISSING_VARS=()
@@ -92,19 +96,10 @@ if [ -z "$DB_USER" ] || [ -z "$DB_PASS" ]; then
 fi
 
 # Parse domain from APP_BASE_URL for Caddy SSL certificate registration
+# Extract domain for Caddy configuration
 APP_DOMAIN=$(echo "$APP_BASE_URL" | sed -e 's|^[^/]*//||' -e 's|/.*$||' -e 's|:[0-9]*$||')
 if [ -z "$APP_DOMAIN" ]; then
   echo_error "Failed to parse domain name from APP_BASE_URL: '$APP_BASE_URL'"
-fi
-
-# Prompt for GitHub registry credentials
-echo_info "Enter your GitHub Registry credentials (required to pull private container images):"
-read -p "GitHub Username: " GH_USER
-read -sp "GitHub Personal Access Token (PAT): " GH_PAT
-echo ""
-
-if [ -z "$GH_USER" ] || [ -z "$GH_PAT" ]; then
-  echo_error "GitHub credentials cannot be empty."
 fi
 
 # 2. Update System Packages
@@ -201,7 +196,7 @@ echo_success "User '$APP_USER' configured in 'docker' group."
 
 # Authenticate docker to registry under the app user context
 echo_info "Logging in to GitHub Container Registry (ghcr.io) as '$APP_USER'..."
-if echo "$GH_PAT" | sudo -u "$APP_USER" docker login ghcr.io -u "$GH_USER" --password-stdin; then
+if echo "$GITHUB_PAT" | sudo -u "$APP_USER" docker login ghcr.io -u "$GITHUB_USERNAME" --password-stdin; then
   echo_success "GitHub Container Registry authentication succeeded."
 else
   echo_error "GitHub Registry authentication failed. Please check your credentials."
