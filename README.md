@@ -100,6 +100,12 @@ Before configuring the `.env` file, you must securely generate the symmetric dat
    docker compose build
    docker stack deploy -c docker-compose.yml 1timelink
    ```
+7. **Install the Slack App**:
+   Once the Docker services are online and healthy (which you can check using `docker service ls`), navigate to the following URL in your web browser to initiate the Slack OAuth authorization flow:
+   ```
+   https://<your-vps-domain>/slack/oauth/install
+   ```
+   *This redirects the administrator to Slack's authorization screen. Upon granting access, the workspace is registered, and the Slack app is ready to handle commands.*
 
 ---
 
