@@ -126,10 +126,14 @@ PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 
 # Listen on all interfaces so containers can connect
 sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" "$PG_CONF"
+sed -i "s/listen_addresses = 'localhost'/listen_addresses = '*'/g" "$PG_CONF"
 
-# Allow connections from Docker network range
+# Allow connections from Docker bridge and Swarm overlay network ranges
 if ! grep -q "172.16.0.0/12" "$PG_HBA"; then
   echo "host    all             all             172.16.0.0/12           md5" >> "$PG_HBA"
+fi
+if ! grep -q "10.0.0.0/8" "$PG_HBA"; then
+  echo "host    all             all             10.0.0.0/8              md5" >> "$PG_HBA"
 fi
 
 # Get host gateway IP on the default docker bridge interface

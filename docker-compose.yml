@@ -29,7 +29,7 @@ services:
         order: start-first
         failure_action: rollback
       restart_policy:
-        condition: on-failure
+        condition: any
 
   frontend:
     image: ghcr.io/iamanvesh/1timelink-frontend:latest
@@ -43,7 +43,7 @@ services:
         order: start-first
         failure_action: rollback
       restart_policy:
-        condition: on-failure
+        condition: any
 
   backend:
     image: ghcr.io/iamanvesh/1timelink-backend:latest
@@ -59,7 +59,7 @@ services:
         order: start-first
         failure_action: rollback
       restart_policy:
-        condition: on-failure
+        condition: any
 
   slack-proxy:
     image: ghcr.io/iamanvesh/1timelink-slack-proxy:latest
@@ -75,7 +75,7 @@ services:
         order: start-first
         failure_action: rollback
       restart_policy:
-        condition: on-failure
+        condition: any
 
 volumes:
   caddy_data:
