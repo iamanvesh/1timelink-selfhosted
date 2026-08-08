@@ -113,7 +113,7 @@ apt-get update -y
 
 # 3. Install Core Tools
 echo_info "Installing core system utilities..."
-apt-get install -y curl gnupg lsb-release openssl git
+apt-get install -y curl gnupg lsb-release openssl git awscli
 
 # 4. Install PostgreSQL on Host
 echo_info "Installing PostgreSQL database server..."
@@ -218,7 +218,10 @@ cp ./Dockerfile.caddy "$INSTALL_DIR/"
 cp ./slack-manifest.yaml "$INSTALL_DIR/" 2>/dev/null || true
 cp ./vps-administration.md "$INSTALL_DIR/" 2>/dev/null || true
 cp ./update.sh "$INSTALL_DIR/" 2>/dev/null || true
-chmod +x "$INSTALL_DIR/update.sh" 2>/dev/null || true
+cp ./backup.sh "$INSTALL_DIR/" 2>/dev/null || true
+cp ./db_restore.sh "$INSTALL_DIR/" 2>/dev/null || true
+cp ./monitor.sh "$INSTALL_DIR/" 2>/dev/null || true
+chmod +x "$INSTALL_DIR/update.sh" "$INSTALL_DIR/backup.sh" "$INSTALL_DIR/db_restore.sh" "$INSTALL_DIR/monitor.sh" 2>/dev/null || true
 
 # If SPRING_DATASOURCE_URL points to localhost/127.0.0.1, update it to the docker gateway IP
 if [[ "$SPRING_DATASOURCE_URL" == *"localhost"* ]] || [[ "$SPRING_DATASOURCE_URL" == *"127.0.0.1"* ]]; then
@@ -238,6 +241,24 @@ if grep -q "^DOMAIN=" "$INSTALL_DIR/.env"; then
 else
   echo "DOMAIN=$APP_DOMAIN" >> "$INSTALL_DIR/.env"
 fi
+
+# Configure Cron Jobs for Backup (2 AM daily) and Monitor (every 5 minutes) idempotently
+echo_info "Configuring automated cron jobs for database backups and service monitoring..."
+CRON_BACKUP="0 2 * * * /home/$APP_USER/app/backup.sh > /dev/null 2>&1"
+CRON_MONITOR="*/5 * * * * /home/$APP_USER/app/monitor.sh > /dev/null 2>&1"
+
+CURRENT_CRON=$(sudo -u "$APP_USER" crontab -l 2>/dev/null || true)
+NEW_CRON="$CURRENT_CRON"
+
+if ! echo "$CURRENT_CRON" | grep -q "backup.sh"; then
+  NEW_CRON=$(printf "%s\n%s" "$NEW_CRON" "$CRON_BACKUP")
+fi
+
+if ! echo "$CURRENT_CRON" | grep -q "monitor.sh"; then
+  NEW_CRON=$(printf "%s\n%s" "$NEW_CRON" "$CRON_MONITOR")
+fi
+
+echo "$NEW_CRON" | sed '/^$/d' | sudo -u "$APP_USER" crontab -
 
 # Ensure all files in the directory are owned by the unprivileged user
 chown -R "$APP_USER:$APP_USER" "/home/$APP_USER"

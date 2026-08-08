@@ -12,6 +12,9 @@ This directory contains configuration templates and guides for packaging and dep
 * **`slack-manifest.yaml`**: The Slack App Manifest configuration template.
 * **`install.sh`**: Automated VPS installation and bootstrapping script.
 * **`update.sh`**: Automated VPS application update script.
+* **`backup.sh`**: Database backup script (scheduled via cron).
+* **`db_restore.sh`**: Database snapshot restore script.
+* **`monitor.sh`**: Actuator-level service health monitor script (scheduled via cron).
 * **`vps-administration.md`**: Operations and runbook guide for system administrators managing the VPS stack.
 
 ---

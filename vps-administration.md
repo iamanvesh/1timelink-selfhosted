@@ -108,27 +108,42 @@ To inspect container environments, network connectivity, or file structures:
 
 ---
 
-## 5. PostgreSQL Database Operations (Host Level)
+## 5. PostgreSQL Database Operations (Backup & Restore)
 
-Because PostgreSQL runs directly on the VPS host (isolated from the containers), you must run database utility commands from the host terminal as `postgres` or root.
+1TimeLink provides automated scripts to back up and restore your database using the S3/R2 storage configured in your `.env` file. These commands must be run under the `onetimelink` user context (run `sudo -i -u onetimelink` first).
 
-### Backing up the Database
-To generate a compressed database dump:
-```bash
-sudo -u postgres pg_dump -Fc onetimelink > /tmp/onetimelink_backup.dump
-```
+### A. Database Backups (`backup.sh`)
+An automated backup job is configured during installation to run **daily at 2 AM**. This script:
+1. Dumps the host database locally using `pg_dump`.
+2. Compresses the SQL dump using `gzip`.
+3. Uploads the file securely to your configured S3/R2 bucket in the `db-backups/` prefix using the AWS CLI.
+4. Cleans up the local temporary backup file to save disk space.
 
-### Restoring the Database
-To restore from a backup file:
-```bash
-sudo -u postgres pg_restore -d onetimelink --clean --no-owner /tmp/onetimelink_backup.dump
-```
+* **To run a manual backup immediately**:
+  ```bash
+  cd ~/app
+  ./backup.sh
+  ```
 
-### Inspecting DB Tables
-To open an interactive database console:
+### B. Database Restores (`db_restore.sh`)
+To restore your database to a specific snapshot state:
+1. Log in to the VPS and switch to the app user:
+   ```bash
+   sudo -i -u onetimelink
+   ```
+2. Locate the backup filename from your S3/R2 bucket (e.g. `backup_2026-06-03_12-00-00.sql.gz`).
+3. Run the restore script, passing the backup filename as an argument:
+   ```bash
+   cd ~/app
+   ./db_restore.sh backup_2026-06-03_12-00-00.sql.gz
+   ```
+   *Note: This script will download the backup from S3, cleanly drop/re-create the existing database tables, and restore the schema and records.*
+
+### C. Direct Console Inspection
+To inspect the database tables directly from the host terminal:
 ```bash
 sudo -u postgres psql -d onetimelink
 ```
-Useful SQL checks:
-* **List authorized workspaces**: `SELECT id, created_by, plan FROM workspace;`
-* **Check link count**: `SELECT count(*) FROM link;`
+Useful SQL queries:
+* **Check workspace registration status**: `SELECT id, created_by, plan FROM workspace;`
+* **Check database link payload count**: `SELECT count(*) FROM link;`
