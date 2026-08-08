@@ -38,7 +38,43 @@ When deploying, the customer must inject these environment variables:
 
 ---
 
-## 3. Deploying to a Single VPS (Docker Compose)
+## 3. Cryptographic Key Generation
+
+Before configuring the `.env` file, you must securely generate the symmetric database encryption key and the Slack proxy shared token on your terminal:
+
+* **Generate Database Encryption Key (`DB_ENCRYPTION_KEY`)**:
+  This is a 32-character hexadecimal key (128-bit) used to encrypt Slack OAuth tokens natively inside PostgreSQL using PG-symmetric encryption:
+  ```bash
+  openssl rand -hex 16
+  ```
+* **Generate Slack Proxy Shared Token (`SLACK_PROXY_SECRET`)**:
+  This is a secure base64 string used to authenticate the companion Slack proxy relay connection to the backend JVM:
+  ```bash
+  openssl rand -base64 24
+  ```
+
+---
+
+## 4. Slack App Manifest Setup
+
+1TimeLink uses a Slack App Manifest to instantly register slash commands, shortcuts, and event subscriptions.
+
+1. Open the [Slack API Console](https://api.slack.com/apps).
+2. Click **Create New App** $\rightarrow$ **From an app manifest**.
+3. Select the Slack workspace you want to install 1TimeLink to.
+4. Copy the contents of the **`slack-manifest.yaml`** file from the root folder.
+5. In the Slack YAML editor:
+   * Replace the domain placeholder `yourdomain.com` (or `https://yourdomain.com`) with your actual configured VPS domain (e.g. `1tl.company.com`).
+6. Click **Next** $\rightarrow$ **Create**.
+7. Retrieve your credentials from the **Basic Information** tab:
+   * `SLACK_CLIENT_ID` (App ID / Client ID)
+   * `SLACK_CLIENT_SECRET` (Client Secret)
+   * `SLACK_SIGNING_SECRET` (Signing Secret)
+8. Save these values inside your local `.env` configuration file on the VPS before launching the installation.
+
+---
+
+## 5. Deploying to a Single VPS (Docker Compose)
 
 1. Copy the entire `1timelink-self-hosted/` folder to the target VPS.
 2. Copy the example configuration template to `.env`:
@@ -64,7 +100,7 @@ When deploying, the customer must inject these environment variables:
 
 ---
 
-## 4. Updating the Application (Self-Hosted Clients)
+## 6. Updating the Application (Self-Hosted Clients)
 
 To pull the latest software updates and apply them to the running stack without losing data:
 1. Log in to the VPS as the unprivileged user:
