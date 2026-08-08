@@ -9,7 +9,7 @@
     }
 
     # Matchers
-    @oauth path /slack/oauth/callback*
+    @oauth path /slack/oauth*
     @webhook path /webhooks/slack*
     @link_create {
         path /api/v1/links
